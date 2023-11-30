@@ -38,5 +38,5 @@ else
 	jtest_result pass
 fi
 
-rm -f $test_file
-rm -f $test_run_c_file
+rm -f "$test_file"
+rm -f "$test_run_c_file"
