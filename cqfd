@@ -554,7 +554,10 @@ while [ $# -gt 0 ]; do
 		has_alternate_command=true
 		break
 		;;
-	shell)
+	sh|ash|dash|bash|ksh|zsh|csh|tcsh|fish|shell)
+		if [ "$1" != "shell" ]; then
+			CQFD_SHELL="$1"
+		fi
 		shift
 		config_load $flavor
 		command_string="${CQFD_SHELL:-/bin/sh}"
