@@ -11,21 +11,11 @@ if [ "$CQFD_RUN_WITH_SUDO" = true ]; then
 	cqfd_docker=(sudo "${cqfd_docker[@]}")
 fi
 
-cd "$TDIR/" || exit 1
-
-cp -f .cqfd/docker/Dockerfile .cqfd/docker/Dockerfile.orig
-cp -f .cqfd/docker/Dockerfile.init_custom_image .cqfd/docker/Dockerfile
-cp -f .cqfdrc .cqfdrc.orig
-cp -f cqfdrc-custom_image .cqfdrc
-
-################################################################################
-# 'cqfd' pulls custom_img_name
-################################################################################
-custom_img_name="ubuntu:16.04"
-sed -i -e "s!^custom_img_name=.*\$!custom_img_name='$custom_img_name'!" .cqfdrc
-if "${cqfd_docker[@]}" inspect "$custom_img_name" &>/dev/null; then
-	jtest_log info "${cqfd_docker[-1]} registry contains image named: $custom_img_name, removing..."
-	"${cqfd_docker[@]}" rmi "$custom_img_name"
+jtest_prepare "cqfd init works using custom_img_name=$custom_image_1"
+if "$cqfd" --init run "true"; then
+	jtest_result pass
+else
+	jtest_result fail
 fi
 
 jtest_prepare "cqfd pulls image $custom_img_name from registry"

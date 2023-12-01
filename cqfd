@@ -38,6 +38,7 @@ usage() {
 Usage: $PROGNAME [OPTIONS] [COMMAND] [COMMAND OPTIONS] [ARGUMENTS]
 
 Options:
+    --init               Initialize build container.
     --release            Release software.
     -f <file>            Use file as config file (default .cqfdrc).
     -d <directory>       Use directory as cqfd directory (default .cqfd).
@@ -941,6 +942,7 @@ load_config() {
 	fi
 }
 
+has_to_init=false
 has_to_release=false
 has_alternate_command=false
 while [ $# -gt 0 ]; do
@@ -1005,6 +1007,9 @@ while [ $# -gt 0 ]; do
 	-q)
 		quiet=true
 		export BUILDKIT_PROGRESS=quiet
+		;;
+	--init)
+		has_to_init=true
 		;;
 	--release)
 		has_to_release=true
@@ -1085,6 +1090,10 @@ load_config "$flavor"
 
 if ! $has_alternate_command && [ -n "$*" ] && [ -z "$build_command" ]; then
 	warn ".cqfdrc: Missing or empty build.command property!"
+fi
+
+if $has_to_init; then
+	docker_build
 fi
 
 if $has_alternate_command; then
