@@ -63,7 +63,7 @@ else
 fi
 
 jtest_prepare "cqfdrc succeeds if project and build sections are set correctly"
-if "$cqfd" init && "$cqfd" run true; then
+if "$cqfd" --reinit run true; then
 	jtest_result pass
 else
 	jtest_result fail
