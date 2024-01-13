@@ -71,55 +71,31 @@ EOF
 #        by Andrés J. Díaz - License: MIT
 # arg$1: path to ini file
 parse_ini_config_file() {
-	# bash 4.3 and later break compatibility
-	local is_compatibility_mode=false
-	if [ $BASH_VERSINFO -ge 4 -a ${BASH_VERSINFO[1]} -gt 2 ]; then
-		is_compatibility_mode=true
-		shopt -s compat42
-	fi
+	local ini
 
 	if [ ! -f "$1" ]; then
 		die "Unable to find $1 - create it or pick one using 'cqfd -f'"
 	fi
 
-	ini="$(<"$1")"                                    # read the file
-	# shellcheck disable=SC2206
-	ini="${ini//[/\\[}"                               # escape [
-	# shellcheck disable=SC2206
-	ini="${ini//]/\\]}"                               # escape ]
-	# shellcheck disable=SC2206
-	IFS=$'\n' && ini=( ${ini} )                       # convert to line-array
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]//;*/} )                            # remove comments with ;
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/$'\t'=/=} )                        # remove tabs before =
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/=$'\t'/=} )                        # remove tabs after =
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/\ =/=} )                           # remove space before =
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/=\ /=} )                           # remove space after =
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/#\\[/\}$'\n'cfg.section.} )        # set section prefix
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/%\\]/ \(} )                        # convert text2function (1)
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/%\(/ \( \)} )                      # close array parenthesis
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/%\\ \)/ \\} )                      # the multiline trick
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/%\( \)/\(\) \{} )                  # convert text2function (2)
-	# shellcheck disable=SC2206
-	ini=( ${ini[*]/%\} \)/\}} )                       # remove extra parenthesis
-	ini[0]=""                                         # remove first element
-	ini[${#ini[*]} + 1]='}'                           # add the last brace
-	if ! eval "${ini[*]}" 2>/dev/null; then           # eval the result
+	mapfile -t ini <"$1"
+	ini=( "${ini[@]//[/\\[}" )                # escape [
+	ini=( "${ini[@]//]/\\]}" )                # escape ]
+	ini=( "${ini[@]//;*/}" )                  # remove comments with ;
+	ini=( "${ini[@]/$'\t'=/=}" )              # remove tabs before =
+	ini=( "${ini[@]/=$'\t'/=}" )              # remove tabs after =
+	ini=( "${ini[@]/\ =/=}" )                 # remove space before =
+	ini=( "${ini[@]/=\ /=}" )                 # remove space after =
+	ini=( "${ini[@]/#\\[/\}; cfg.section.}" ) # set section prefix
+	ini=( "${ini[@]/%\\]/(}" )                # convert text2function (1)
+	ini=( "${ini[@]/%(/()}" )                 # close array parenthesis
+	ini=( "${ini[@]/%\)/) {}" )               # the multiline trick
+	ini=( "${ini[@]/%\( \)/\(\) \{}" )        # convert text2function (2)
+	ini=( "${ini[@]/%\} \)/\}}" )             # remove extra parenthesis
+	ini[0]="${ini[0]/\}; /}"                  # remove first element
+	ini+=( "};" )                             # add the last brace
+	ini=("$(printf "%s\n" "${ini[@]}")")
+	if ! eval "${ini[0]}"; then               # eval the result
 		die "$1: Invalid ini-file!"
-	fi
-
-	# restore previous bash behaviour
-	if $is_compatibility_mode; then
-		shopt -u compat42
 	fi
 }
 
@@ -499,7 +475,7 @@ config_load() {
 		local cqfdrc_dir="$cqfd_project_dir/"
 	fi
 
-	IFS="$IFS" parse_ini_config_file "${cqfdrc_dir}${cqfdrc}"
+	parse_ini_config_file "${cqfdrc_dir}${cqfdrc}"
 
 	# generate dynamically the list of flavors based on the names of shell
 	# functions reported by the buildtin:
