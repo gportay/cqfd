@@ -125,8 +125,10 @@ debug() {
 
 # docker_build() - Initialize build container
 docker_build() {
-	local args=()
+	local args
+	args=()
 
+	# Suppress the build output
 	if [ "$quiet" ]; then
 		args+=(-q)
 	fi
@@ -147,6 +149,7 @@ docker_build() {
 		args+=("${array[@]}")
 	fi
 
+	# Tag the image
 	args+=(-t "$docker_img_name")
 
 	if [ -z "$build_context" ]; then
@@ -181,8 +184,6 @@ image_exists_locally() {
 # arg$1: the command string to execute as $cqfd_user
 #
 docker_run() {
-	local args=(--privileged)
-
 	if ! image_exists_locally "$docker_img_name"; then
 		# If custom image name is used, try to pull it before dying
 		if [ "$custom_img_name" ]; then
@@ -193,6 +194,9 @@ docker_run() {
 			die "The docker image doesn't exist, launch 'cqfd init' to create it"
 		fi
 	fi
+
+	local args
+	args=()
 
 	# Append extra args from the .cqfdrc [build] section
 	if [ "$docker_run_args" ]; then
@@ -210,12 +214,19 @@ docker_run() {
 		args+=("${array[@]}")
 	fi
 
-	args+=(--rm --log-driver=none)
+	# Give access to all host devices
+	args+=(--privileged)
 
-	# always keep stdin open
+	# Cleanup container after exit
+	args+=(--rm)
+
+	# Do not log
+	args+=(--log-driver=none)
+
+	# Always keep stdin open
 	args+=(-i)
 
-	# allocate a pty if stdin/err are connected to a tty
+	# Allocate a pty if stdin/err are connected to a tty
 	if [ -t 0 ] && [ -t 2 ]; then
 		args+=(-t)
 	fi
@@ -225,6 +236,7 @@ docker_run() {
 		cqfd_user="$USER"
 	fi
 
+	# And, map cqfd_user_home and cqfd_user_cwd
 	if [ -n "$HOME" ]; then
 		cqfd_user_home="$(cd "$HOME"; pwd)"
 		cqfd_user_cwd="$(pwd)"
