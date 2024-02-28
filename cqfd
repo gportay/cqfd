@@ -123,13 +123,29 @@ debug() {
 
 # docker_build() - Initialize build container
 docker_build() {
-	if [ -z "$project_build_context" ]; then
-		debug executing: docker build ${quiet:+-q} $CQFD_EXTRA_BUILD_ARGS -t "$docker_img_name" "$(dirname "$dockerfile")"
-		docker build ${quiet:+-q} $CQFD_EXTRA_BUILD_ARGS -t "$docker_img_name" "$(dirname "$dockerfile")"
-	else
-		debug executing: docker build ${quiet:+-q} $CQFD_EXTRA_BUILD_ARGS -t "$docker_img_name" "${project_build_context}" -f "$dockerfile"
-		docker build ${quiet:+-q} $CQFD_EXTRA_BUILD_ARGS -t "$docker_img_name" "${project_build_context}" -f "$dockerfile"
+	local args=()
+
+	if [ "$quiet" ]; then
+		args+=(-q)
 	fi
+
+	# Append extra args from $CQFD_EXTRA_BUILD_ARGS
+	if [ "$CQFD_EXTRA_BUILD_ARGS" ]; then
+		local array
+		read -a array <<<"$CQFD_EXTRA_BUILD_ARGS"
+		args+=("${array[@]}")
+	fi
+
+	args+=(-t "$docker_img_name")
+
+	if [ -z "$project_build_context" ]; then
+		args+=("$(dirname "$dockerfile")")
+	else
+		args+=("$project_build_context" -f "$dockerfile")
+	fi
+
+	debug executing: docker build "${args[@]}"
+	docker build "${args[@]}"
 }
 
 # image_exists_locally(): checks if image exists in the local image store
