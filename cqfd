@@ -397,7 +397,7 @@ docker_run() {
 	args=()
 
 	# Check if image exists locally
-	if ! "$cqfd_docker" image inspect "$cqfd_image" &>/dev/null; then
+	if ! "${cqfd_docker[@]}" image inspect "$cqfd_image" &>/dev/null; then
 		# If custom image name is used, try to pull it before dying
 		if [ "$project_custom_img_name" ]; then
 			if ! "${cqfd_docker[@]}" pull "$cqfd_image" &>/dev/null; then
