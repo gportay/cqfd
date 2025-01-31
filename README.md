@@ -79,9 +79,9 @@ has been stopped and removed.
 
 ### Release
 
-The `release` command behaves exactly like `run`, but creates a release
-tarball for your project additionally. The release files (as specified
-in your `.cqfdrc`) will be included inside the release archive.
+The `--release` option creates a release tarball for your project. The release
+files (as specified in your `.cqfdrc`) will be included inside the release
+archive.
 
     $ cqfd release
 
