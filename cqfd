@@ -69,43 +69,6 @@ Command options for run / release:
 EOF
 }
 
-# parse_ini_config_file()
-#   Ref: https://ajdiaz.wordpress.com/2008/02/09/bash-ini-parser/
-#        by Andrés J. Díaz - License: MIT
-# arg$1: path to ini file
-parse_ini_config_file() {
-	# bash 4.3 and later break compatibility
-	#
-	# in posix mode, single quotes are considered special when expanding
-	# the word portion of a double-quoted ${…} parameter expansion and can
-	# be used to quote a closing brace or other special character (this is
-	# part of POSIX interpretation 221); in later versions, single quotes
-	# are not special within double-quoted word expansions
-	local BASH_COMPAT=42
-	local IFS
-	local ini
-
-	if [ ! -f "$1" ]; then
-		die "Unable to find $1 - create it or pick one using 'cqfd -f'"
-	fi
-
-	mapfile -t ini <"$1"
-	ini=( "${ini[@]//[/\\[}" )                # escape [
-	ini=( "${ini[@]//]/\\]}" )                # escape ]
-	ini=( "${ini[@]/#\\[/\}; cfg.section.}" ) # set section prefix
-	ini=( "${ini[@]/%\\]/(}" )                # convert text2function (1)
-	ini=( "${ini[@]/%(/()}" )                 # close array parenthesis
-	ini=( "${ini[@]/%\)/) {}" )               # the multiline trick
-	ini=( "${ini[@]/%\( \)/\(\) \{}" )        # convert text2function (2)
-	ini=( "${ini[@]/%\} \)/\}}" )             # remove extra parenthesis
-	ini[0]="${ini[0]/\}; /}"                  # remove first element
-	ini+=( "};" )                             # add the last brace
-	ini=("$(printf "%s\n" "${ini[@]}")")
-	if ! eval "${ini[0]}"; then               # eval the result
-		die "$1: Invalid ini-file!"
-	fi
-}
-
 ## die() - exit when an error occured
 # $* messages and variables shown in the error message
 die() {
@@ -113,9 +76,88 @@ die() {
 	exit 1
 }
 
+## warning() - output a warning message
+# $* messages and variables shown in the message
+warning() {
+	echo "cqfd: warning: $*" >&2
+}
+
 ## debug() - print verbose messages
 debug() {
 	test -z "$CQFD_DEBUG" || echo "cqfd: debug: $*"
+}
+
+# source_ini_file() - source ini file to INI* bash arrays
+# arg$1: path to ini file
+source_ini_file() {
+	local multiline
+	local section
+	local line
+
+	# Unset former context
+	unset INI "${!INI@}"
+
+	# Convert lines to bash array and iterate over lines
+	mapfile -t lines <"$1"
+	for line in "${lines[@]}"; do
+		# Prepend previous multiline if any
+		if [[ "$multiline" ]]; then
+			line="$multiline
+$line"
+			unset multiline
+		fi
+
+		# Skip shell and .ini comments
+		if [[ "$line" =~ ^[\ \	]*[\#\;] ]]; then
+			continue
+		# Save multiline and continue
+		elif [[ "$line" =~ \\$ ]]; then
+			multiline="$line"
+			continue
+		fi
+
+		# Add new section
+		if [[ "$line" =~ ^\[(.*)\]$ ]]; then
+			section="${BASH_REMATCH[1]}"
+			section="${section//./_}"
+			section="${section//-/_}"
+			eval "INI+=('${BASH_REMATCH[1]}')"
+		# Add new property to current section
+		elif [[ "$line" =~ ^([A-Za-z0-9_-]+)[\ \	]*(\+?=)[\ \	]*(.*)$ ]]; then
+			local property
+			local value
+			property="${BASH_REMATCH[1]}"
+			property="${property//./_}"
+			property="${property//-/_}"
+			value="${BASH_REMATCH[3]}"
+			eval "INI__${section^^}__${property^^}${BASH_REMATCH[2]}$value"
+			eval "INI__${section^^}+=('${BASH_REMATCH[1]}')"
+		# Die
+		elif [[ "$line" ]]; then
+			die "line \"$line\" is invalid"
+		fi
+	done
+}
+
+# source_ini_sections() - source sections to environment
+# arg$*: sections from the ini file to source
+source_ini_sections() {
+	local section
+
+	for section in "$@"; do
+		local sections
+		eval "sections=(\"\${INI__${section^^}[@]}\")"
+		if [[ "${#sections[@]}" -eq 0 ]]; then
+			die "section \"$section\" not found"
+		fi
+
+		local property
+		local properties
+		eval "properties=(\"\${INI__${section^^}[@]}\")"
+		for property in "${properties[@]}"; do
+			eval "$property=\"\${INI__${section^^}__${property^^}}\""
+		done
+	done
 }
 
 # docker_build() - Initialize build container
@@ -506,32 +548,25 @@ config_load() {
 		local cqfdrc_dir="$cqfd_project_dir/"
 	fi
 
-	parse_ini_config_file "$cqfdrc_dir$cqfdrc"
+	source_ini_file "$cqfdrc_dir$cqfdrc"
 
-	# generate dynamically the list of flavors based on the names of shell
-	# functions reported by the buildtin:
-	#  - the cfg.section. prefix is stripped
-	#  - the build and project sections are stripped
-	mapfile -t flavors < <(compgen -A function -X '!cfg.section.*')
-	flavors=("${flavors[@]/cfg.section./}")
+	# generate dynamically the list of flavors based on the sections (build
+	# and project sections are stripped out
+	local i
+	flavors=("${INI[@]}")
 	for i in "${!flavors[@]}"; do
 		if [[ "${flavors[$i]}" =~ ^(build|project)$ ]]; then
 			unset 'flavors[$i]'
 		fi
 	done
 
-	cfg.section.project # load the [project] section
-	cfg.section.build # load the [build] section
+	# source the sections [project] and [build] and flavor
+	source_ini_sections project build
 
 	# build parameters may be overriden by a flavor defined in the
 	# build section's 'flavors' parameter.
-	local flavor="$1"
-	if [ -n "$flavor" ]; then
-		if grep -qw "$flavor" <<< "${flavors[*]}"; then
-			cfg.section."$flavor" # load the [$flavor] section
-		else
-			die "flavor \"$flavor\" not found in flavors list"
-		fi
+	if [ -n "$1" ]; then
+		source_ini_sections "$1"
 	fi
 
 	if [ "$docker" ]; then
