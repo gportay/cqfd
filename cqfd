@@ -406,7 +406,7 @@ make_launcher() {
 	tmpfile=$(mktemp /tmp/tmp.XXXXXX)
 	chmod 0755 "$tmpfile"
 	cat >"$tmpfile" <<EOF
-#!/bin/sh
+#!/bin/bash
 # create container user to match expected environment
 
 die() {
