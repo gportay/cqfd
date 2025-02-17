@@ -15,6 +15,7 @@ mkdir -p "$sub_dir"
 pushd "$sub_dir" >/dev/null || exit 1
 
 # the two paths should be identical
+cat .cqfdrc
 p1=$(pwd | strings)
 p2=$("$cqfd" run pwd | strings)
 
