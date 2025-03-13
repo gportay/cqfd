@@ -131,7 +131,7 @@ die() {
 
 ## debug() - print verbose messages
 debug() {
-	test -z "$CQFD_DEBUG" || echo "cqfd: debug: $*"
+	test "${CQFD_DEBUG:-0}" -lt 1 || echo "cqfd: debug: $*"
 }
 
 # docker_build() - Initialize build container
@@ -411,13 +411,15 @@ make_launcher() {
 
 set -e
 
+CQFD_DEBUG="\${CQFD_DEBUG:-$((CQFD_DEBUG--))}"
+
 die() {
 	echo "error: \$*" >&2
 	exit 1
 }
 
 debug() {
-	test -z "$CQFD_DEBUG" || echo "debug: \$*"
+	test "\${CQFD_DEBUG:-0}" -lt 1 || echo "debug: \$*"
 }
 
 test_cmd() {
@@ -609,7 +611,8 @@ while [ $# -gt 0 ]; do
 		exit
 		;;
 	--verbose)
-		export CQFD_DEBUG=true
+		CQFD_DEBUG=$((CQFD_DEBUG+1))
+		export CQFD_DEBUG
 		;;
 	init)
 		config_load "$flavor"
