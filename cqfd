@@ -513,6 +513,11 @@ config_load() {
 	# shellcheck disable=SC2154
 	project_custom_img_name="$custom_img_name"
 
+	# check for [project] org and name properties are set and are not empty
+	if [ -z "$project_org" ] || [ -z "$project_name" ]; then
+		die "$cqfdrc: Missing project.org or project.name properties"
+	fi
+
 	# load the [build] section
 	if ! cfg.section.build 2>/dev/null; then
 		die "$cqfdrc: Missing build section!"
@@ -551,12 +556,12 @@ config_load() {
 	# shellcheck disable=SC2154
 	release_tar_opts="$tar_options"
 
-	dockerfile="${cqfd_project_dir}/${cqfddir}/${distro:-docker}/Dockerfile"
-
-	if [ -z "$project_org" ] || [ -z "$project_name" ]; then
-		die "Please set project.org and project.name in .cqfdrc"
+	# check for [build] command is set and is not empty
+	if [ -z "$build_cmd" ]; then
+		die "$cqfdrc: Missing build.command property"
 	fi
 
+	dockerfile="${cqfd_project_dir}/${cqfddir}/${distro:-docker}/Dockerfile"
 	if [ ! -f "$dockerfile" ]; then
 		die "$dockerfile not found"
 	fi
@@ -691,10 +696,6 @@ if $has_alternate_command; then
 	build_cmd="$*"
 elif [ -n "$*" ]; then
 	build_cmd+=" $*"
-fi
-
-if [ -z "$build_cmd" ]; then
-	die "No build.command defined in ${cqfdrc}, and no command specified"
 fi
 
 docker_run "$build_cmd"
