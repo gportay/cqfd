@@ -574,7 +574,9 @@ config_load() {
 		die "$cqfdrc: Missing build.command property"
 	fi
 
-	dockerfile="${cqfd_project_dir}/${cqfddir}/${distro:-docker}/Dockerfile"
+	if [ -z "$dockerfile" ]; then
+		dockerfile="${cqfd_project_dir}/${cqfddir}/${distro:-docker}/Dockerfile"
+	fi
 	if [ ! -f "$dockerfile" ]; then
 		die "$dockerfile not found"
 	fi
