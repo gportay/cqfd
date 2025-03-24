@@ -22,7 +22,6 @@ set -o pipefail
 
 PROGNAME=$(basename "$0")
 VERSION=5.7.0
-cqfdrc=".cqfdrc"
 cqfd_user='builder'
 cqfd_user_home='/home/builder'
 cqfd_user_cwd="$cqfd_user_home/src"
@@ -527,16 +526,11 @@ load_config() {
 		die ".cqfd directory not found in directory tree"
 	fi
 
-	# unless using '-f other_cqfdrc', use base directory located above
-	if ! $has_custom_cqfdrc; then
-		cqfdrc="$cqfd_project_dir/$cqfdrc"
-	fi
-
-	if [ ! -f "$cqfdrc" ]; then
+	if [ ! -f "${CQFDRC_FILE:-$cqfd_project_dir/.cqfdrc}" ]; then
 		die "Unable to find .cqfdrc - create it or pick one using 'cqfd -f'"
 	fi
 
-	if ! cfg_parser "$cqfdrc"; then
+	if ! cfg_parser "${CQFDRC_FILE:-$cqfd_project_dir/.cqfdrc}"; then
 		die ".cqfdrc: Invalid ini-file!"
 	fi
 
@@ -630,7 +624,6 @@ load_config() {
 	fi
 }
 
-has_custom_cqfdrc=false
 has_to_release=false
 has_alternate_command=false
 while [ $# -gt 0 ]; do
@@ -666,8 +659,7 @@ while [ $# -gt 0 ]; do
 		;;
 	-f)
 		shift
-		has_custom_cqfdrc=true
-		cqfdrc="$1"
+		CQFDRC_FILE="$(realpath "$1")"
 		;;
 	-C)
 		shift
