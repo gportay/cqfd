@@ -22,7 +22,6 @@ set -o pipefail
 
 PROGNAME=$(basename "$0")
 VERSION=5.6.1-dev
-cqfdrc=".cqfdrc"
 cqfd_user="${USER:-builder}"
 cqfd_home="${HOME:-/home/$cqfd_user}"
 cqfd_cwd="${PWD:-$cqfd_home/src}"
@@ -311,7 +310,7 @@ make_archive() {
 
 	eval "files=($release_files)"
 	if [ -z "${files[*]}" ]; then
-		die "No files to archive, check files in $cqfdrc"
+		die "No files to archive, check files in .cqfdrc"
 	fi
 
 	for file in "${files[@]}"; do
@@ -502,17 +501,12 @@ config_load() {
 		die ".cqfd directory not found in directory tree"
 	fi
 
-	# unless using '-f other_cqfdrc', use base directory located above
-	if ! $has_custom_cqfdrc; then
-		local cqfdrc_dir="$cqfd_project_dir/"
+	if [ ! -f "${CQFDRC_FILE:-$cqfd_project_dir/.cqfdrc}" ]; then
+		die "Unable to find .cqfdrc - create it or pick one using 'cqfd -f'"
 	fi
 
-	if [ ! -f "${cqfdrc_dir}${cqfdrc}" ]; then
-		die "Unable to find ${cqfdrc_dir}${cqfdrc} - create it or pick one using 'cqfd -f'"
-	fi
-
-	if ! cfg_parser "${cqfdrc_dir}${cqfdrc}"; then
-		die "${cqfdrc_dir}${cqfdrc}: Invalid ini-file!"
+	if ! cfg_parser "${CQFDRC_FILE:-$cqfd_project_dir/.cqfdrc}"; then
+		die ".cqfdrc: Invalid ini-file!"
 	fi
 
 	# generate dynamically the list of flavors based on the names of shell
@@ -529,7 +523,7 @@ config_load() {
 
 	# load the [project] section
 	if ! cfg_section_project 2>/dev/null; then
-		die "$cqfdrc: Missing project section!"
+		die ".cqfdrc: Missing project section!"
 	fi
 
 	# shellcheck disable=SC2154
@@ -545,12 +539,12 @@ config_load() {
 
 	# check for [project] org and name properties are set and are not empty
 	if [ -z "$project_org" ] || [ -z "$project_name" ]; then
-		die "$cqfdrc: Missing project.org or project.name properties"
+		die ".cqfdrc: Missing project.org or project.name properties"
 	fi
 
 	# load the [build] section
 	if ! cfg_section_build 2>/dev/null; then
-		die "$cqfdrc: Missing build section!"
+		die ".cqfdrc: Missing build section!"
 	fi
 
 	build_flavors="${flavors[*]}"
@@ -562,7 +556,7 @@ config_load() {
 		if grep -qw "$flavor" <<< "${flavors[*]}"; then
 			# load the [$flavor] section
 			if ! cfg_section_"$flavor" 2>/dev/null; then
-				die "$cqfdrc: Missing $flavor section!"
+				die ".cqfdrc: Missing $flavor section!"
 			fi
 		else
 			die "flavor \"$flavor\" not found in flavors list"
@@ -588,7 +582,7 @@ config_load() {
 
 	# check for [build] command is set and is not empty
 	if [ -z "$build_cmd" ]; then
-		die "$cqfdrc: Missing build.command property"
+		die ".cqfdrc: Missing build.command property"
 	fi
 
 	# Set docker image name to project image if defined, or set default name to build from Dockerfile
@@ -644,7 +638,6 @@ config_load() {
 	fi
 }
 
-has_custom_cqfdrc=false
 has_to_init=false
 has_to_release=false
 has_alternate_command=false
@@ -681,8 +674,7 @@ while [ $# -gt 0 ]; do
 		;;
 	-f)
 		shift
-		has_custom_cqfdrc=true
-		cqfdrc="$1"
+		CQFDRC_FILE="$(realpath "$1")"
 		;;
 	-C)
 		shift
