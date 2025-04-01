@@ -574,6 +574,8 @@ config_load() {
 	# shellcheck disable=SC2154
 	build_docker_run_args="$docker_run_args"
 	# shellcheck disable=SC2154
+	build_distro="$distro"
+	# shellcheck disable=SC2154
 	cqfd_extra_groups="$user_extra_groups"
 	# shellcheck disable=SC2154
 	release_files="$files"
@@ -584,7 +586,7 @@ config_load() {
 	# shellcheck disable=SC2154
 	release_tar_opts="$tar_options"
 
-	dockerfile="$cqfd_project_dir/$cqfddir/${distro:-docker}/Dockerfile"
+	dockerfile="$cqfd_project_dir/$cqfddir/${build_distro:-docker}/Dockerfile"
 
 	if [ -z "$project_org" ] || [ -z "$project_name" ]; then
 		die "Please set project.org and project.name in .cqfdrc"
@@ -608,8 +610,8 @@ config_load() {
 	fi
 
 	# Adapt things for a specific container
-	if [ -n "$distro" ]; then
-		docker_img_name+="_$distro"
+	if [ -n "$build_distro" ]; then
+		docker_img_name+="_$build_distro"
 	fi
 }
 
