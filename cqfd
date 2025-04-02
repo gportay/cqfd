@@ -250,8 +250,8 @@ docker_run() {
 		done
 	fi
 
-	# Set HOME variable for the $cqfd_user, except if it was explicitly set
-	# via CQFD_EXTRA_RUN_ARGS or docker_run_args
+	# Set HOME variable for the $cqfd_user, except if it was explicitely
+	# set via CQFD_EXTRA_RUN_ARGS or docker_run_args
 	if ! echo "$CQFD_EXTRA_RUN_ARGS $build_docker_run_args" |
 	     grep -qE "(-e[[:blank:]]*|--env[[:blank:]]+)HOME="; then
 		args+=(--env "HOME=$cqfd_home")
