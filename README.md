@@ -433,6 +433,15 @@ Or, the current unreleased version of the `cqfd-git` package via:
 makepkg -f PKGBUILD-git
 ```
 
+### Debian
+
+If you use an Debian derivative distribution and the dpkg package manager, you
+can build the latest released version of the `cqfd` package via:
+
+```sh
+dpkg-buildpackage -us -uc
+```
+
 ## Using podman
 
 Podman may be used instead of Docker, but with limited functionalities,
