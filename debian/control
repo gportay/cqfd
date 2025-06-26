@@ -1,0 +1,11 @@
+Source: cqfd
+Maintainer: Gaël PORTAY <gael.portay@gmail.com>
+Section: utils
+Priority: optional
+Standards-Version: 22
+Build-Depends: debhelper-compat (= 13)
+
+Package: cqfd
+Architecture: all
+Depends: ${misc:Depends}
+Description: A tool to wrap commands in controlled Docker containers.
