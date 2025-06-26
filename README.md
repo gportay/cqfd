@@ -418,6 +418,21 @@ manager, you can install `cqfd` via:
 guix install cqfd
 ```
 
+### Arch Linux
+
+If you use an Arch Linux derivative distribution and the pacman package
+manager, you can build the latest released version of the `cqfd` package via:
+
+```sh
+makepkg
+```
+
+Or, the current unreleased version of the `cqfd-git` package via:
+
+```sh
+makepkg -f PKGBUILD-git
+```
+
 ## Using podman
 
 Podman may be used instead of Docker, but with limited functionalities,
