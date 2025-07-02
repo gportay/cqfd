@@ -1,27 +1,33 @@
-Name: cqfd
-Version: 5.7.0
-Release: 1
-Summary: A tool to wrap commands in controlled Docker containers
+Name:           cqfd
+Version:        5.7.0
+Release:        1
+Summary:        A tool to wrap commands in controlled Docker containers
 
-License: GPLv3+
-URL: https://github.com/savoirfairelinux/cqfd
-Source0: v%{version}.tar.gz
+License:        GPL-3.0-or-later
+Source0:        https://github.com/savoirfairelinux/%{name}/archive/%{version}.tar.gz
 
-BuildArch: noarch
-BuildRequires: make
-BuildRequires: pkgconfig(bash-completion)
-Requires: bash
-Requires: docker
+BuildArch:      noarch
+BuildRequires:  make
+BuildRequires:  pkgconfig(bash-completion)
+Requires:       bash
+Requires:       docker
 
 %description
 Run commands in the current directory within a container defined in a per-project config file.
 
-%prep:
+%global debug_package %{nil}
 
-%build:
+%prep
+%setup -q
+
+
+%check
+make check
+
 
 %install
-make DESTDIR=%{buildroot}
+%make_install PREFIX=/usr
+
 
 %files
 %{_bindir}/cqfd
@@ -34,4 +40,4 @@ make DESTDIR=%{buildroot}
 
 %changelog
 * Thu Jun 26 2025 Gaël PORTAY <gael.portay@gmail.com>
-- Initial release
+- Initial release.
