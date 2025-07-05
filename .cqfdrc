@@ -3,5 +3,12 @@ org='savoirfairelinux'
 name='cqfd'
 
 [build]
+command='bash'
+
+[rpm]
 distro='rpm'
 command='make-rpm.sh'
+
+[deb]
+distro='deb'
+command='make-deb.sh'
