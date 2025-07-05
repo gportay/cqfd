@@ -12,3 +12,7 @@ command='make-rpm.sh'
 [deb]
 distro='deb'
 command='make-deb.sh'
+
+[pkg]
+distro='pkg'
+command='make-pkg.sh'
