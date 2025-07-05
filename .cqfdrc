@@ -1,0 +1,7 @@
+[project]
+org='savoirfairelinux'
+name='cqfd'
+
+[build]
+distro='rpm'
+command='make-rpm.sh'
