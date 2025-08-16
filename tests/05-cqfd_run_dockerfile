@@ -14,7 +14,7 @@ jtest_prepare "cqfd run using a Dockerfile with entrypoint should success"
 cat <<EOF >>.cqfd/docker/Dockerfile
 ENTRYPOINT ["false"]
 EOF
-if "$cqfd" init && "$cqfd" run; then
+if "$cqfd" --reinit run; then
 	jtest_result pass
 else
 	jtest_result fail
