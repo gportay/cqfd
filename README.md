@@ -100,11 +100,17 @@ Here is a sample `.cqfdrc` file:
     files='README.FOOINC output/images/sdcard.img'
     archive='cqfd-%Gh.tar.xz'
 
+Note: The property and its value must be stick to the equal sign, without using
+whitespaces: i.e. `foo =.	bar` is invalid.
+
 ### Comments
 
 The `.cqfdrc` file supports Unix shell comments; the words after the character `#`
 are ignored up to the end of line. A comment cannot be set in the first line,
 and right after a section.
+
+Note: The traditional .ini comment, i.e. words after the character `;` are not
+supported anymore since cqfd 5.7.0.
 
 ### The [project] section
 

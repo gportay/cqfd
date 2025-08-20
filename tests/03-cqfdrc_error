@@ -87,10 +87,20 @@ else
 fi
 
 cp -f .cqfdrc.orig .cqfdrc
+sed -i -e "/[build]/,/^$/s,^command=.*$,command='true; echo \"It works!\"'," .cqfdrc
+
+jtest_prepare "cqfdrc does not strip semicolons in command"
+if "$cqfd" | grep "It works!" ; then
+	jtest_result pass
+else
+	jtest_result fail
+fi
+
+cp -f .cqfdrc.orig .cqfdrc
 echo "foo	=bar" >>.cqfdrc
 
-jtest_prepare "cqfdrc with tabulation before should pass"
-if "$cqfd" run true; then
+jtest_prepare "cqfdrc with tabulation before should not pass"
+if ! "$cqfd" run true; then
 	jtest_result pass
 else
 	jtest_result fail
@@ -99,8 +109,8 @@ fi
 cp -f .cqfdrc.orig .cqfdrc
 echo "foo=	bar" >>.cqfdrc
 
-jtest_prepare "cqfdrc with tabulation after should pass"
-if "$cqfd" run true; then
+jtest_prepare "cqfdrc with tabulation after should not pass"
+if ! "$cqfd" run true; then
 	jtest_result pass
 else
 	jtest_result fail
@@ -109,8 +119,8 @@ fi
 cp -f .cqfdrc.orig .cqfdrc
 echo "foo =bar" >>.cqfdrc
 
-jtest_prepare "cqfdrc with space before should pass"
-if "$cqfd" run true; then
+jtest_prepare "cqfdrc with space before should not pass"
+if ! "$cqfd" run true; then
 	jtest_result pass
 else
 	jtest_result fail
@@ -119,8 +129,8 @@ fi
 cp -f .cqfdrc.orig .cqfdrc
 echo "foo= bar" >>.cqfdrc
 
-jtest_prepare "cqfdrc with space after should pass"
-if "$cqfd" run true; then
+jtest_prepare "cqfdrc with space after should not pass"
+if ! "$cqfd" run true; then
 	jtest_result pass
 else
 	jtest_result fail
